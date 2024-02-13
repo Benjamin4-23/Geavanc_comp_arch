@@ -33,7 +33,7 @@ int main() {
     arrayFlipFunction<<<1, 1000>>>(d_arr);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
-    std::cout << "Time taken by GPU: "
+    std::cout << "Nodige tijd GPU: "
          << duration.count() << " microseconds" << std::endl;
 
     // Data terug naar CPU memory kopieren
@@ -56,7 +56,7 @@ int main() {
     }
     stop = high_resolution_clock::now();
     duration = duration_cast<microseconds>(stop - start);
-    std::cout << "Time taken by CPU: "
+    std::cout << "Nodige tijd CPU: "
          << duration.count() << " microseconds" << std::endl;
 
     // Print the flipped array

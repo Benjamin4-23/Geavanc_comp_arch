@@ -30,7 +30,7 @@ int main() {
 
     // Uitvoeren
     auto start = high_resolution_clock::now();
-    arrayFlipFunction<<<1, 1000>>>(d_arr);
+    arrayFlipFunction<<<1, 500>>>(d_arr);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
     std::cout << "Nodige tijd GPU: "
@@ -38,7 +38,6 @@ int main() {
 
     // Data terug naar CPU memory kopieren
     cudaMemcpy(h_arr, d_arr, 999 * sizeof(int), cudaMemcpyDeviceToHost);
-
 
     // Zelfde op CPU uitvoeren
     int *c_arr = new int[999];

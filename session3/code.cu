@@ -80,7 +80,7 @@ __global__ void invertImageKernel(uint8_t* image_array, uint8_t* new_image_array
     // stel 48 elementen, 1:16 ratio, 3 threads die elk 16 elementen doen, thread_id 0 doet 0, 3 (idx+((48+15)/16)), 6
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     for (int j = idx; j < M*N*C; j+=((M*N*C+15)/16)) {
-        if (idx % 3 == 0) new_image_array[j] = (image_array[j]%25)*10;
+        if ((j%3) == 0) new_image_array[j] = (image_array[j]%25)*10;
         new_image_array[j] = 255 - image_array[j];
     }
 }

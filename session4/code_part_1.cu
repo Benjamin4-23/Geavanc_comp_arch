@@ -79,7 +79,7 @@ void save_image_array(uint8_t* image_array){
 
 
 
-__global__ void averageGrayscaleCoalesced(uint8_t* image, int width, int height, uint8_t* new_image) {
+__global__ void averageGrayscaleUncoalesced(uint8_t* image, int width, int height, uint8_t* new_image) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int sum = 0;
     for (int j = 0; j <3; j++) {
@@ -92,7 +92,7 @@ __global__ void averageGrayscaleCoalesced(uint8_t* image, int width, int height,
 
 }
 
-__global__ void averageGrayscaleUncoalesced(uint8_t* image, int width, int height, uint8_t* new_image) {
+__global__ void averageGrayscaleCoalesced(uint8_t* image, int width, int height, uint8_t* new_image) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
     // Calculate the grayscale value of the pixel
@@ -124,24 +124,24 @@ int main (void) {
 
     // timing events
     cudaEvent_t start, stop;
-    uint8_t* h_image_array_coalesced = get_image_array();
+    uint8_t* h_image_array_uncoalesced = get_image_array();
 
     // [RR...RGG...GBB...B] array maken
-    uint8_t* h_image_array_uncoalesced = (uint8_t*)malloc(M*N*C*sizeof(uint8_t));
+    uint8_t* h_image_array_coalesced = (uint8_t*)malloc(M*N*C*sizeof(uint8_t));
     int index = 0;
     for (int i = 0; i < M*N*C; i+=3) {
-        h_image_array_uncoalesced[index] = h_image_array_coalesced[i];
-        h_image_array_uncoalesced[index+(M*N)] = h_image_array_coalesced[i+1];
-        h_image_array_uncoalesced[index+(M*N*2)] = h_image_array_coalesced[i+2];
+        h_image_array_coalesced[index] = h_image_array_uncoalesced[i];
+        h_image_array_coalesced[index+(M*N)] = h_image_array_uncoalesced[i+1];
+        h_image_array_coalesced[index+(M*N*2)] = h_image_array_uncoalesced[i+2];
         index += 1;
     }
 
 
     uint8_t* d_image_array;
     //cudaMalloc(&d_image_array, M*N*C*sizeof(uint8_t));
-    //cudaMemcpy(d_image_array, h_image_array_coalesced, M*N*C*sizeof(uint8_t), cudaMemcpyHostToDevice);
+    //cudaMemcpy(d_image_array, h_image_array_uncoalesced, M*N*C*sizeof(uint8_t), cudaMemcpyHostToDevice);
     cudaMalloc(&d_image_array, M*N*C*sizeof(uint8_t));
-    cudaMemcpy(d_image_array, h_image_array_uncoalesced, M*N*C*sizeof(uint8_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_image_array, h_image_array_coalesced, M*N*C*sizeof(uint8_t), cudaMemcpyHostToDevice);
 
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
@@ -156,8 +156,8 @@ int main (void) {
             int blockSize = i;
             int numBlocks = ((M * N)+blockSize - 1) / blockSize;
             cudaEventRecord(start, 0);
-            //averageGrayscaleCoalesced<<<numBlocks, blockSize>>>(d_image_array, M, N, d_new_image_array);
-            averageGrayscaleUncoalesced<<<numBlocks, blockSize>>>(d_image_array, M,N, d_new_image_array);
+            //averageGrayscaleUncoalesced<<<numBlocks, blockSize>>>(d_image_array, M, N, d_new_image_array);
+            averageGrayscaleCoalesced<<<numBlocks, blockSize>>>(d_image_array, M,N, d_new_image_array);
             cudaEventRecord(stop, 0);
             cudaEventSynchronize(stop);
             float time;
@@ -173,11 +173,6 @@ int main (void) {
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
     free(h_new_image_array);
-
-    // Part 2
-
-
-
 
     return 0;
 }

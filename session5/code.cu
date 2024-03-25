@@ -139,7 +139,7 @@ int main() {
         for (int i = 0; i < 4; ++i) {
             cudaMalloc(&d_result, sizeof(int));
             gpu_reduction<<<1, (NUM_ELEMENTS + 1) / 2, NUM_ELEMENTS * sizeof(int)>>>(d_arr[i], NUM_ELEMENTS, d_result, i);
-
+            cudaDeviceSynchronize();
 
             int gpu_result_reduction;
             cudaMemcpy(&gpu_result_reduction, d_result, sizeof(int), cudaMemcpyDeviceToHost);
@@ -174,7 +174,7 @@ int main() {
         }
     }
 
-    std::cout << "Mean execution time: " << total/100 << " ms\n"; //0.65ms met 4, 1.31ms met 10k
+    std::cout << "Mean execution time: " << total/100 << " ms\n"; //0.83ms met 4, 1.37ms met 10k
     
 
     return 0;

@@ -4,7 +4,7 @@
 #include <ctime>
 #include <chrono>
 
-#define NUM_ELEMENTS 4
+#define NUM_ELEMENTS 10000
 
 __global__ void gpu_reduction(int* arr, int elements, int* result, int operation) {
     unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -99,6 +99,8 @@ int main() {
         for (int i = 0; i < 4; ++i) {
             cudaStreamCreate(&stream[i]);
         }
+        
+        
 
 
         //1
@@ -110,7 +112,7 @@ int main() {
             h_input[i] = rand() % 10 + 1;
             //std::cout << h_input[i] << ",";
         }
-        std::cout << std::endl;
+        //std::cout << std::endl;
         int* d_input;
         int* d_result;
         cudaMalloc(&d_input, NUM_ELEMENTS * sizeof(int));
@@ -126,9 +128,9 @@ int main() {
         srand(time(nullptr) + randint + 1);
         for (int i = 0; i < NUM_ELEMENTS; ++i) {
             h_input_2[i] = rand() % 10 + 1;
-            std::cout << h_input_2[i] << ",";
+            //std::cout << h_input_2[i] << ",";
         }
-        std::cout << std::endl;
+        //std::cout << std::endl;
         int* d_input_2;
         int* d_result_2;
         cudaMalloc(&d_input_2, NUM_ELEMENTS * sizeof(int));
@@ -144,9 +146,9 @@ int main() {
         srand(time(nullptr) + randint + 2);
         for (int i = 0; i < NUM_ELEMENTS; ++i) {
             h_input_3[i] = rand() % 10 + 1;
-            std::cout << h_input_3[i] << ",";
+            //std::cout << h_input_3[i] << ",";
         }
-        std::cout << std::endl;
+        //std::cout << std::endl;
         int* d_input_3;
         int* d_result_3;
         cudaMalloc(&d_input_3, NUM_ELEMENTS * sizeof(int));
@@ -161,9 +163,9 @@ int main() {
         srand(time(nullptr) + randint + 3);
         for (int i = 0; i < NUM_ELEMENTS; ++i) {
             h_input_4[i] = rand() % 10 + 1;
-            std::cout << h_input_4[i] << ",";
+            //std::cout << h_input_4[i] << ",";
         }
-        std::cout << std::endl;
+        //std::cout << std::endl;
         int* d_input_4;
         int* d_result_4;
         cudaMalloc(&d_input_4, NUM_ELEMENTS * sizeof(int));
@@ -180,8 +182,8 @@ int main() {
         cudaStreamSynchronize(stream[1]);
         cudaStreamSynchronize(stream[2]);
         cudaStreamSynchronize(stream[3]);
-        std::cout << "Sum " << h_output[0] << "  Product " << h_output_2[0] << "  Minimum " << h_output_3[0] << "  Maximum " << h_output_4[0];
-        std::cout << std::endl;
+        //std::cout << "Sum " << h_output[0] << "  Product " << h_output_2[0] << "  Minimum " << h_output_3[0] << "  Maximum " << h_output_4[0];
+        //std::cout << std::endl;
 
 
 
@@ -189,7 +191,7 @@ int main() {
         auto end_cpu = std::chrono::steady_clock::now();
         std::chrono::duration<double> cpu_time = end_cpu - start_cpu;
         if (k >=  900) total+= cpu_time.count()*1000;
-        std::cout << "execution time: " << cpu_time.count()*1000 << " ms\n";
+        //std::cout << "execution time: " << cpu_time.count()*1000 << " ms\n";
 
 
 
@@ -227,7 +229,7 @@ int main() {
         }
     }
     
-    std::cout << "Mean execution time: " << total/100 << " ms\n";
+    std::cout << "Mean execution time: " << total/100 << " ms\n"; // 55ms met 4, 1.28ms met 10k
 
     return 0;
 }

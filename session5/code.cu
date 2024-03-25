@@ -4,7 +4,7 @@
 #include <chrono>
 #include <cuda_runtime.h>
 
-#define NUM_ELEMENTS 4
+#define NUM_ELEMENTS 10000
 
 __global__ void gpu_reduction(int* arr, int elements, int* result, int operation) {
     unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -144,17 +144,17 @@ int main() {
             int gpu_result_reduction;
             cudaMemcpy(&gpu_result_reduction, d_result, sizeof(int), cudaMemcpyDeviceToHost);
 
-            std::string operation;
-            if (i == 0)
-                operation = "sum";
-            else if (i == 1)
-                operation = "product";
-            else if (i == 2)
-                operation = "minimum";
-            else
-                operation = "maximum";
+            // std::string operation;
+            // if (i == 0)
+            //     operation = "sum";
+            // else if (i == 1)
+            //     operation = "product";
+            // else if (i == 2)
+            //     operation = "minimum";
+            // else
+            //     operation = "maximum";
 
-            std::cout << " GPU " << operation << " " << gpu_result_reduction << "\n";
+            // std::cout << " GPU " << operation << " " << gpu_result_reduction << "\n";
 
             cudaFree(d_result);
         }
@@ -162,7 +162,7 @@ int main() {
         auto end_cpu = std::chrono::steady_clock::now();
         std::chrono::duration<double> cpu_time = end_cpu - start_cpu;
         if (k >=  900) total+= cpu_time.count()*1000;
-        std::cout << "execution time: " << cpu_time.count()*1000 << " ms\n";
+        //std::cout << "execution time: " << cpu_time.count()*1000 << " ms\n";
 
         delete[] h_arr_1;
         delete[] h_arr_2;
@@ -174,7 +174,7 @@ int main() {
         }
     }
 
-    std::cout << "Mean execution time: " << total/100 << " ms\n";
+    std::cout << "Mean execution time: " << total/100 << " ms\n"; //0.65ms met 4, 1.31ms met 10k
     
 
     return 0;

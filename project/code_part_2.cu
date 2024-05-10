@@ -250,34 +250,35 @@ int main() {
         {"Netflix", "correlation data\\US Stocks\\netflix\\NFLXUSUSD_H1.csv"},
         {"Tesla", "correlation data\\US Stocks\\tesla\\TSLAUSUSD_H1.csv"}
     };
-    for (int i = 10; i <= 10000; i*=10) {
-        std::cout << "Started calculation with " << i << " elements..." << std::endl;
+
+    std::vector<std::vector<OHLCData>> all_data;
+    for (const auto& stock : stock_data) {
+        std::vector<OHLCData> data;
+        readCSV(stock.file_path, data);
+        all_data.push_back(data);
+    }
+
+    for (int k = 10; k <= 100000; k*=10) {
+        std::cout << "Started calculation with " << k << " elements..." << std::endl;
         double total_execution_time = 0;
         int iterations_count = 0;
-        for (const auto& stock1 : stock_data) {
-            std::vector<OHLCData> stock1_data;
-            readCSV(stock1.file_path, stock1_data);
 
-            for (const auto& stock2 : stock_data) {
-                int numRecords = i;
+        for (size_t i = 0; i < all_data.size(); i++) {
+            for (size_t j = 0; j < all_data.size(); j++) {
+                int numRecords = k;
                 float current_execution_time = 0;
                 iterations_count++;
                 cudaEvent_t start, stop;
                 cudaEventCreate(&start);
                 cudaEventCreate(&stop);
-    
-    
-                //                                       -------------------------------- Read data
-                std::vector<OHLCData> stock2_data;
-                readCSV(stock2.file_path, stock2_data);
                 
     
                 //                                         --------------------------- Find common timestamps to compare the two stocks
                 std::vector<std::string> timestamps1, timestamps2;
-                for (const auto& entry : stock1_data) {
+                for (const auto& entry : all_data[i]) {
                     timestamps1.push_back(entry.timestamp);
                 }
-                for (const auto& entry : stock2_data) {
+                for (const auto& entry : all_data[j]) {
                     timestamps2.push_back(entry.timestamp);
                 }
                 std::vector<std::string> commonTimestamps;
@@ -287,13 +288,13 @@ int main() {
 
                 // Go through data and if it's a common timestamp, add the open and close prices to separate vectors
                 std::vector<double> open1_all, close1_all, open2_all, close2_all;
-                for (const auto& entry : stock1_data) {
+                for (const auto& entry : all_data[i]) {
                     if (std::binary_search(commonTimestamps.begin(), commonTimestamps.end(), entry.timestamp)) {
                         open1_all.push_back(entry.open);
                         close1_all.push_back(entry.close);
                     }
                 }
-                for (const auto& entry : stock2_data) {
+                for (const auto& entry : all_data[j]) {
                     if (std::binary_search(commonTimestamps.begin(), commonTimestamps.end(), entry.timestamp)) {
                         open2_all.push_back(entry.open);
                         close2_all.push_back(entry.close);
@@ -308,7 +309,7 @@ int main() {
                     dest.insert(dest.end(), src.begin(), src.begin() + std::min(n, src.size()));
                 };
                 if (numRecords > commonTimestamps.size()) {
-                    std::cout << "Not enough data for " << stock1.name << " and " << stock2.name << ". Only " << commonTimestamps.size() << " common data points available." << std::endl;
+                    std::cout << "Not enough data for " << stock_data[i].name << " and " << stock_data[j].name << ". Only " << commonTimestamps.size() << " common data points available." << std::endl;
                 }   
                 numRecords = std::min<int>(static_cast<int>(commonTimestamps.size()), numRecords);
                 copy_first_n(open1_all, open1, numRecords);
@@ -362,7 +363,6 @@ int main() {
                 cudaMalloc((void**)&d_intermediate_storage, global_mem_intermediate_storage_size);
                 size_t shared_mem_size = 2*BLOCK_SIZE*sizeof(double);
                 numBlocks = (numRecords + BLOCK_SIZE - 1) / BLOCK_SIZE;
-                
                 cudaEventRecord(start, 0);
                 calculateMeans<<<numBlocks, BLOCK_SIZE,shared_mem_size>>>(d_returns1,d_returns2, numRecords, numBlocks, d_intermediate_storage, d_means);
                 cudaEventRecord(stop, 0);
@@ -394,8 +394,8 @@ int main() {
                 double denom2 = h_correlation[2];
                 //std::cout << "numerator,denom1,denom2: " << numerator << "," << denom1 << "," << denom2 << std::endl;
                 double correlation = numerator / (sqrt(denom1) * sqrt(denom2));
-                std::cout << stock1.name << "," << stock2.name << "," << correlation << std::endl;
-                std::cout << " Exectution time: " << current_execution_time << std::endl;
+                std::cout << stock_data[i].name << "," << stock_data[j].name << "," << correlation << std::endl;
+                //std::cout << " Exectution time: " << current_execution_time << std::endl;
                 total_execution_time += current_execution_time;
     
                 cudaFree(d_open1);
@@ -404,15 +404,15 @@ int main() {
                 cudaFree(d_close2);
                 cudaFree(d_returns1);
                 cudaFree(d_returns2);
+                cudaFree(d_means);
                 cudaFree(d_correlation);
                 cudaFree(d_intermediate_storage);
                 cudaEventDestroy(start);
-                cudaFree(d_means);
                 cudaEventDestroy(stop);
             }
         }
     
-        std::cout << "Aantal values: " << i << ", Average execution time: " << (total_execution_time/iterations_count) << std::endl;
+        std::cout << "Aantal values: " << k << ", Average execution time: " << (total_execution_time/iterations_count) << std::endl;
     }
     
 

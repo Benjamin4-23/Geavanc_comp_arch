@@ -146,28 +146,31 @@ int main() {
         {"Netflix", "correlation data\\US Stocks\\netflix\\NFLXUSUSD_H1.csv"},
         {"Tesla", "correlation data\\US Stocks\\tesla\\TSLAUSUSD_H1.csv"}
     };
-    for (int i = 10; i <= 10000; i*=10) {
-        std::cout << "Started calculation with " << i << " elements..." << std::endl;
+
+    std::vector<std::vector<OHLCData>> all_data;
+    for (const auto& stock : stock_data) {
+        std::vector<OHLCData> data;
+        readCSV(stock.file_path, data);
+        all_data.push_back(data);
+    }
+
+    for (int k = 10000; k <= 100000; k*=10) {
+        std::cout << "Started calculation with " << k << " elements..." << std::endl;
 
         double total_execution_time = 0;
         int iterations_count = 0;
-        for (const auto& stock1 : stock_data) {
-            std::vector<OHLCData> stock1_data;
-            readCSV(stock1.file_path, stock1_data);
-
-            for (const auto& stock2 : stock_data) {
-                int numRecords = i; 
+        for (size_t i = 0; i < all_data.size(); i++) {
+            for (size_t j = 0; j < all_data.size(); j++) {
+                int numRecords = k; 
                 double current_execution_time = 0;
                 iterations_count++;
-                //                                       -------------------------------- data inlezen
-                std::vector<OHLCData> stock2_data;
-                readCSV(stock2.file_path, stock2_data);
+
                 // Find common timestamps to determine valid records
                 std::vector<std::string> timestamps1, timestamps2;
-                for (const auto& entry : stock1_data) {
+                for (const auto& entry : all_data[i]) {
                     timestamps1.push_back(entry.timestamp);
                 }
-                for (const auto& entry : stock2_data) {
+                for (const auto& entry : all_data[j]) {
                     timestamps2.push_back(entry.timestamp);
                 }
                 
@@ -178,22 +181,23 @@ int main() {
                                     std::back_inserter(commonTimestamps));
                 // Filter data based on common timestamps
                 std::vector<double> open1_all, close1_all, open2_all, close2_all;
-                for (const auto& entry : stock1_data) {
+                for (const auto& entry : all_data[i]) {
                     if (std::binary_search(commonTimestamps.begin(), commonTimestamps.end(), entry.timestamp)) {
                         open1_all.push_back(entry.open);
                         close1_all.push_back(entry.close);
                     }
                 }
-                for (const auto& entry : stock2_data) {
+                for (const auto& entry : all_data[j]) {
                     if (std::binary_search(commonTimestamps.begin(), commonTimestamps.end(), entry.timestamp)) {
                         open2_all.push_back(entry.open);
                         close2_all.push_back(entry.close);
                     }
                 }
                 // Check if there is enough data for the specified number of records    
-                //if (numRecords > commonTimestamps.size()) {
-                    //std::cout << "Not enough data for " << stock1.name << " and " << stock2.name << ". Only " << commonTimestamps.size() << " common data points available." << std::endl;
-                //}   
+                if (numRecords > commonTimestamps.size()) {
+                    std::cout << "Not enough data for " << stock_data[i].name << " and " << stock_data[j].name << ". Only " << commonTimestamps.size() << " common data points available." << std::endl;
+                }  
+
                 //                               --------------------------------data klaarmaken voor gebruik
                 numRecords = std::min<int>(static_cast<int>(commonTimestamps.size()), numRecords);
                 
@@ -225,12 +229,12 @@ int main() {
                 current_execution_time = cpu_time.count()*1000;
                 total_execution_time += current_execution_time;
                 
-                std::cout << "" << stock1.name << "," << stock2.name << "," << correlation << std::endl;
+                std::cout << "" << stock_data[i].name << "," << stock_data[j].name << "," << correlation << std::endl;
                 //std::cout << "Exectution time: " << current_execution_time << std::endl;
             }
         }
 
-        std::cout << "total_execution_time execution time: " << (total_execution_time/iterations_count) << std::endl;
+        std::cout << "Aantal values: " << k << ", Average execution time: " << (total_execution_time/iterations_count) << std::endl;
 
     }
     
